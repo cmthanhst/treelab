@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Công ty CP Đầu Tư Việt Tín">
+<meta name="theme-color" content="#173e35">
+<title>TREE LAB · Thực hành cắt tỉa cây 3D</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#213e37;background:#edf2ed;font-size:14px;--green:#17674f;--line:#dce5de}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden}button,input,textarea{font:inherit}button{min-height:44px;border:1px solid var(--line);border-radius:9px;background:#fff;color:#24453b;padding:8px 12px;cursor:pointer;font-weight:600}button:hover:not(:disabled){background:#e8f2e9}button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #e69b27;outline-offset:2px}button:disabled{opacity:.4;cursor:default}svg{display:block;pointer-events:none;flex-shrink:0}.primary{background:var(--green);border-color:var(--green);color:#fff}.primary:hover:not(:disabled){background:#10523e}.danger{background:#b34a2d;color:#fff;border-color:#b34a2d}.danger:hover:not(:disabled){background:#943b23}
+header{flex:0 0 auto;min-height:58px;padding:6px max(14px,env(safe-area-inset-right)) 6px max(14px,env(safe-area-inset-left));display:flex;align-items:center;justify-content:space-between;background:#173e35;color:white;gap:10px}.brand h1{font-size:19px;letter-spacing:2px;margin:0;white-space:nowrap}.brand h1 span{color:#a8c496;font-weight:400}.brand p{font-size:10px;margin:2px 0 0;color:#c4d7cc}header nav{display:flex;gap:5px}header nav button{display:flex;align-items:center;gap:6px;min-width:44px;color:#e8f2e9;border-color:#527466;background:transparent;font-size:12px;padding:8px 10px}header nav button:hover{color:#173e35}
+.layout{flex:1;min-height:0;display:block}.stage{height:100%;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden}.scene-area{position:relative;min-height:0;overflow:hidden;background:#edf2ed}#viewport{position:absolute;inset:0;touch-action:none}canvas{display:block;width:100%;height:100%;touch-action:none}
+.view-tools,.cut-actions{position:absolute;display:flex;gap:5px;padding:6px;border:1px solid var(--line);border-radius:12px;background:#ffffffed;box-shadow:0 3px 14px #173e350b;z-index:2}.view-tools{top:12px;right:12px}.cut-actions{bottom:12px;right:12px}.view-tools button,.cut-actions button{display:grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:0}.view-tools #randomize{color:#17674f;background:#eaf4e6}.compare-tools{position:absolute;top:12px;left:12px;display:flex;gap:5px;z-index:2}.compare-tools button{min-height:38px;font-size:12px;padding:7px 12px;background:#ffffffed}.compare-tools button[aria-pressed=true]{background:var(--green);color:white;border-color:var(--green)}.compare-labels{position:absolute;inset:0;pointer-events:none;display:none}.compare-labels span{position:absolute;top:76px;padding:5px 10px;background:#ffffffe0;border:1px solid var(--line);border-radius:7px;font-size:11px;font-weight:700}.compare-labels span:first-child{left:38%}.compare-labels span:last-child{right:12px}.compare-labels:after{content:"";position:absolute;left:50%;top:110px;bottom:82px;border-left:1px dashed #8fa288}
+.tree-dock{position:absolute;left:12px;top:76px;width:292px;max-width:calc(100% - 24px);max-height:calc(100% - 160px);display:flex;flex-direction:column;gap:7px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;z-index:1}.tree-info,#settings{flex-shrink:0;background:#fffffff0;border:1px solid var(--line);border-radius:10px;padding:6px 11px;font-size:11px;line-height:1.6;overflow:auto;scrollbar-width:thin}.tree-info{max-height:190px}summary{cursor:pointer;font-weight:650;min-height:40px;display:list-item;padding:9px 0;font-size:12px}.tree-info summary{font-size:11px}.tree-info dl{display:grid;grid-template-columns:1fr auto;gap:3px 10px;margin:6px 0}.tree-info dd{margin:0;font-weight:600}#settings{max-height:min(490px,58dvh)}#settings>summary{position:sticky;top:-6px;background:#fff;z-index:1}#settings .settings-actions{position:sticky;bottom:-6px;padding:7px 0;background:#fff;display:grid}#settings #generate{min-height:40px;font-size:12px}.field{margin:10px 0}.field label{display:flex;justify-content:space-between;font-size:11px;gap:6px}.field output{font-weight:700;color:#346748;white-space:nowrap}.field-heading{display:flex;align-items:center;gap:8px}.field-heading>label:first-child{flex:1;min-width:0}.field label.keep-field{display:flex;align-items:center;justify-content:flex-start;gap:4px;flex-shrink:0;min-height:34px;font-size:11px;color:#59705f;cursor:pointer}.keep-field input,.leaf-toggle input{width:18px;height:18px;margin:0;accent-color:var(--green)}input[type=range]{display:block;width:100%;margin:7px 0 0;accent-color:#357653;height:28px}.leaf-options{border-bottom:1px solid var(--line);margin-bottom:10px;padding-bottom:4px}.leaf-toggle{display:flex;align-items:center;flex-wrap:wrap;gap:7px;font-size:11px;min-height:40px}.muted{color:#657c6c;font-size:12px;line-height:1.6}#settings .muted{font-size:10px}#dirty{color:#a06524;font-size:11px;min-height:16px;margin:5px 0}
+.selection{position:absolute;right:12px;bottom:82px;width:280px;max-width:calc(100% - 24px);max-height:180px;overflow:auto;padding:10px 12px;border:1px solid #d2dfce;border-radius:10px;background:#fffffff2;box-shadow:0 3px 12px #173e350c;font-size:12px;line-height:1.7;z-index:2}.selection strong{color:#25593f}.status-bar{display:flex;align-items:center;flex-wrap:wrap;gap:4px 18px;padding:6px max(12px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:#fbfdf9;border-top:1px solid var(--line);color:#52695a;font-size:11px;line-height:1.5}.stats{display:flex;align-items:center;flex-wrap:wrap;gap:3px 14px}.stat{display:flex;align-items:baseline;gap:5px;white-space:nowrap}.stat strong{font-size:13px;color:#215e48;font-variant-numeric:tabular-nums}.stat span{font-size:11px}#status{flex:1 1 260px;min-width:0;margin:0;font-size:11px;overflow-wrap:anywhere}
+#loading{position:absolute;inset:0;display:grid;place-content:center;text-align:center;background:#edf2edf5;z-index:5;padding:24px}#loading strong{font-size:20px}#loading p{max-width:440px;line-height:1.7}dialog{border:1px solid #d5ddd2;border-radius:14px;max-width:420px;width:calc(100% - 24px);max-height:calc(100dvh - 32px);overflow:auto;padding:20px;color:#254035;box-shadow:0 20px 80px #173e3530}dialog::backdrop{background:#173e3566}dialog h2{margin:0 0 10px;font-size:20px}dialog p{font-size:13px;line-height:1.7}.row{display:flex;gap:7px;margin-top:16px}.row>*{flex:1}.utility-dialog{max-width:540px}.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.dialog-heading h2{font-size:18px;margin:0}.dialog-close{display:grid;place-items:center;min-width:44px;padding:0}.utility-dialog #exercise>summary{display:none}.exercise-field{display:block;font-size:12px;margin:12px 0}.exercise-field input,.exercise-field textarea{display:block;width:100%;font:inherit;padding:9px;border:1px solid var(--line);border-radius:7px;margin-top:5px;background:#fbfcfa;color:#213e37}.exercise-field textarea{resize:vertical;min-height:70px}.file-actions{display:grid;gap:7px}.file-error{color:#a13f25;font-size:12px;line-height:1.6}#log{font-size:12px;line-height:1.8;margin:10px 0;padding-left:22px}.help{font-size:13px;line-height:1.7}.notice{font-size:12px;line-height:1.6;background:#f8f4e9;color:#7d6739;padding:10px;border-radius:8px}
+@media(max-width:760px){header{min-height:54px;padding-top:5px;padding-bottom:5px}.brand h1{font-size:16px}.brand p{font-size:9px}header nav button{padding:8px;justify-content:center}header nav button span{display:none}.view-tools{top:8px;left:10px;right:10px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));justify-items:center;gap:2px;padding:4px}.compare-tools{top:70px;left:10px;right:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.compare-tools button{font-size:11px;min-width:0;min-height:36px;padding:6px 4px}.tree-dock{top:auto;bottom:78px;left:10px;right:10px;width:auto;max-width:none;max-height:min(46%,420px);gap:5px}.tree-info{max-height:155px}#settings{max-height:38dvh}.scene-area.has-selection .tree-dock{display:none}.cut-actions{left:50%;right:auto;transform:translateX(-50%);bottom:10px;gap:4px;padding:5px}.selection{left:10px;right:10px;bottom:78px;width:auto;max-width:none;max-height:140px;font-size:11px;line-height:1.6}.compare-labels span{top:116px;font-size:10px}.compare-labels span:first-child{left:10px}.compare-labels span:last-child{right:10px}.compare-labels:after{top:146px;bottom:78px}.status-bar{padding-left:10px;padding-right:10px;gap:2px}.stats{flex:1 1 100%;gap:3px 10px}.stat strong{font-size:12px}.stat span,#status{font-size:10px}#status{flex-basis:100%;max-height:3em;overflow:auto}dialog{padding:16px}}
+@media(max-height:500px) and (min-aspect-ratio:13/10){header{min-height:46px;padding-top:1px;padding-bottom:1px}.brand p{display:none}.view-tools{left:auto;right:10px;top:8px;display:grid;grid-template-columns:repeat(3,44px);gap:3px;padding:4px}.compare-tools{left:10px;right:auto;top:10px;width:min(330px,calc(100% - 180px));display:flex}.compare-tools button{flex:1;white-space:nowrap;font-size:11px}.tree-dock{top:62px;bottom:auto;left:10px;right:auto;width:260px;max-height:calc(100% - 138px)}#settings{max-height:45dvh}.cut-actions{left:auto;right:10px;transform:none}.selection{left:auto;right:10px;width:280px;max-height:100px}.compare-labels span{top:56px}.compare-labels:after{top:82px}.status-bar{flex-wrap:nowrap}.stats{flex:0 0 auto}.stat span{font-size:9px}#status{flex:1 1 auto;max-height:3em}.scene-area.has-selection .tree-dock{display:none}}
+.viewport-bottom{display:contents}
+@media(max-width:760px){.viewport-bottom{position:absolute;left:10px;right:10px;bottom:8px;display:flex;flex-direction:column;align-items:center;gap:5px;max-height:calc(100% - 120px);z-index:2;pointer-events:none}.viewport-bottom>*{pointer-events:auto}.viewport-bottom .cut-actions{position:static;transform:none;flex-shrink:0;gap:4px;padding:4px}.viewport-bottom .tree-dock{position:static;flex-shrink:1;width:fit-content;max-width:100%;max-height:min(42dvh,340px);gap:3px;align-items:center;overflow:auto}.viewport-bottom .tree-info,.viewport-bottom #settings{width:fit-content;max-width:100%;padding:1px 8px;border-radius:7px;font-size:10px}.viewport-bottom .tree-info>summary,.viewport-bottom #settings>summary{min-height:28px;padding:5px 0;font-size:10px;line-height:1.6;white-space:nowrap;top:-1px}.viewport-bottom .tree-info[open],.viewport-bottom #settings[open]{width:min(292px,calc(100vw - 24px));max-height:32dvh}.viewport-bottom .selection{position:static;width:min(320px,100%);max-width:100%;max-height:120px;flex-shrink:1;margin:0}.viewport-bottom #settings .settings-actions{bottom:-1px}}
+@media(max-height:500px) and (min-aspect-ratio:13/10){.viewport-bottom{position:absolute;right:10px;left:auto;bottom:8px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;max-height:calc(100% - 114px);z-index:2;pointer-events:none}.viewport-bottom>*{pointer-events:auto}.viewport-bottom .cut-actions{position:static;transform:none;flex-shrink:0;gap:4px;padding:4px}.viewport-bottom .tree-dock{position:static;width:fit-content;max-width:290px;max-height:90px;gap:3px;align-items:flex-end;overflow:auto}.viewport-bottom .tree-info,.viewport-bottom #settings{width:fit-content;padding:1px 8px}.viewport-bottom .tree-info>summary,.viewport-bottom #settings>summary{min-height:28px;padding:5px 0;font-size:10px;white-space:nowrap}.viewport-bottom .tree-info[open],.viewport-bottom #settings[open]{width:280px;max-height:90px}.viewport-bottom .selection{position:static;width:280px;max-height:80px;flex-shrink:1}}
+.human-label{position:absolute;left:0;top:0;padding:1px 3px;background:#edf2eddd;color:#355d45;font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap;pointer-events:none;z-index:1;font-variant-numeric:tabular-nums;transform-origin:center}@media(max-width:760px){.human-label{font-size:10px}}
+#log button{display:block;text-align:left;width:100%;height:auto;overflow-wrap:anywhere;margin:4px 0}
+#review-panel{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:min(390px,calc(100% - 20px));max-height:45%;overflow:auto;background:#fffffff5;border:1px solid var(--line);border-radius:10px;padding:10px;z-index:3;font-size:12px}
+#review-panel summary{cursor:pointer;padding:6px 0}
+#review-panel textarea{display:block;width:100%;font:inherit;resize:vertical}
+.review-heading{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.scene-area.reviewing .viewport-bottom,.scene-area.reviewing .view-tools,.scene-area.reviewing .compare-tools,.scene-area.reviewing .compare-labels{display:none!important}
+#focus-cut{float:right;width:40px;padding:4px}
+.brand .product-credit{display:block;line-height:1.3}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+</head>
+<body>
+<header><div class="brand"><h1>TREE LAB <span>/ 3D</span></h1><p class="product-credit">Sản phẩm của Công ty CP Đầu Tư Việt Tín</p></div><nav aria-label="Bài tập và trợ giúp"><button id="open-exercise" title="Bài tập" aria-label="Bài tập"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2M9 10h6M9 14h6M9 18h3"/></svg><span>Bài tập</span></button><button id="open-history" title="Lịch sử" aria-label="Lịch sử"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 4v6h6M3 10a9 9 0 1 1 2 8M12 7v5l3 2"/></svg><span>Lịch sử</span></button><button id="open-help" title="Hướng dẫn" aria-label="Hướng dẫn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M9.3 9a2.8 2.8 0 1 1 4.5 2.2c-1.3.7-1.8 1.1-1.8 2.3M12 17h.01"/></svg><span>Hướng dẫn</span></button></nav></header>
+<main class="layout">
+<section class="stage" aria-label="Mô hình cây 3D">
+<div class="scene-area">
+<div id="viewport"></div><div class="human-label" id="human-label" aria-label="Người tham chiếu cao 1,7 mét">1,7m</div><div class="human-label" id="human-label-right" aria-hidden="true" hidden>1,7m</div>
+
+<div class="view-tools" role="group" aria-label="Góc nhìn, tạo cây và tệp"><button id="front" title="Chính diện · Nhìn cây từ mặt trước" aria-label="Chính diện · Nhìn cây từ mặt trước"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8V3h5M16 3h5v5M3 16v5h5M16 21h5v-5" opacity=".5"/><path d="M12 5c-2 0-3.6 1.5-3.8 3.3C6.3 8.6 5 9.9 5 11.5 5 13.4 6.6 15 8.5 15h7c1.9 0 3.5-1.6 3.5-3.5 0-1.6-1.3-2.9-3.2-3.2C15.6 6.5 14 5 12 5Z" fill="currentColor" fill-opacity=".14"/><path d="M12 11v8m0-4-3-2m3 1 3-2M8 19h8"/></svg></button><button id="top" title="Trên xuống · Nhìn tán cây từ trên cao" aria-label="Trên xuống · Nhìn tán cây từ trên cao"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 1v5m-2-2 2 2 2-2"/><path d="M12 8c2-2 5 0 4.8 2.1 3 .2 4.2 3.9 2 5.7.8 2.7-2.3 5-4.5 3.5-1.5 2.5-5.5 2.2-6.1-.5-2.8.5-4.7-2.8-3-5-1.6-2.3.5-5.5 3.3-4.7C9.3 7.8 10.8 7.3 12 8Z" fill="currentColor" fill-opacity=".14"/><circle cx="12" cy="14" r="1.7"/><path d="m12 12.3-1-2.5m2.5 4.7 2.8.9m-5.2-.3-2.7 1.7"/></svg></button><button id="camera-reset" title="Góc ban đầu · Trở về góc nhìn mặc định" aria-label="Góc ban đầu · Trở về góc nhìn mặc định"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 10 9-7 9 7M5 9v11h14V9M9 20v-7h6v7" fill="currentColor" fill-opacity=".12"/><path d="M2 4v4h4M2.2 7.6C3.7 3.1 8 .8 12.2 1.3" stroke-width="1.4"/></svg></button><button id="randomize" title="Tạo cây ngẫu nhiên · giữ các thông số đã đánh dấu" aria-label="Tạo cây ngẫu nhiên · giữ các thông số đã đánh dấu"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="7.5" cy="7.5" r=".8" fill="currentColor"/><circle cx="16.5" cy="7.5" r=".8" fill="currentColor"/><circle cx="12" cy="12" r=".8" fill="currentColor"/><circle cx="7.5" cy="16.5" r=".8" fill="currentColor"/><circle cx="16.5" cy="16.5" r=".8" fill="currentColor"/></svg></button><button id="load-tree" title="Mở file cây / bài nộp" aria-label="Mở file cây / bài nộp"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 8V5h6l2 3h10v3M3 8v12h16l3-9H7l-4 9"/></svg></button><button id="save-result" title="Lưu cây hiện tại / bài nộp" aria-label="Lưu cây hiện tại / bài nộp"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 21H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h13l4 4v13a1 1 0 0 1-1 1Z"/><path d="M7 3v6h9V3M7 21v-8h10v8"/></svg></button></div>
+<div class="compare-tools" role="group" aria-label="So sánh trước và sau cắt"><button id="view-after" aria-pressed="true">Sau cắt</button><button id="view-before" aria-pressed="false">Trước cắt</button><button id="view-split" aria-pressed="false">So sánh 2 cây</button></div>
+<div class="compare-labels" id="compare-labels"><span>TRƯỚC CẮT</span><span>SAU CẮT</span></div>
+
+
+
+<section id="review-panel" hidden aria-label="Xem lại nhát cắt"><div class="review-heading"><strong id="review-title"></strong><button id="end-review">Về bài làm</button></div><span>Vòng cam: điểm cắt · Màu đỏ: phần bị bỏ</span><details id="note-details"><summary>Nhận xét cho lần cắt này</summary><label for="cut-note">Nhận xét</label><textarea rows="2" id="cut-note" maxlength="1000"></textarea><small>Lưu bài nộp để gửi kèm nhận xét.</small></details></section><div class="viewport-bottom"><div class="selection" id="selection" hidden aria-live="polite">Chưa chọn vị trí.<br><span class="muted">Nhấp/chạm lên thân hoặc cành để chọn điểm cắt.</span></div><div class="cut-actions" role="group" aria-label="Cắt và lịch sử thao tác"><button id="cut" class="danger" title="Xác nhận cắt" aria-label="Xác nhận cắt" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="m8.2 8.2 12.3 12.3M8.2 15.8 20.5 3.5M14 10l-2 2"/></svg></button><button id="cancel" title="Hủy chọn" aria-label="Hủy chọn" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button><button id="undo" title="Hoàn tác (Undo)" aria-label="Hoàn tác (Undo)" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 4 4 9l5 5M4 9h9a7 7 0 0 1 0 14"/></svg></button><button id="redo" title="Làm lại (Redo)" aria-label="Làm lại (Redo)" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 4 5 5-5 5M20 9h-9a7 7 0 0 0 0 14"/></svg></button><button id="reset" title="Khôi phục cây ban đầu (Reset)" aria-label="Khôi phục cây ban đầu (Reset)" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 5v6h6M3.5 11A9 9 0 1 1 5 18"/></svg></button></div><div class="tree-dock" aria-label="Thông tin và chỉnh cây"><details class="tree-info" id="tree-info"><summary id="tree-summary">Thông số cây</summary><dl id="tree-values"></dl></details><details id="settings"><summary>Chỉnh thông số cây</summary><div class="leaf-options"><label class="leaf-toggle"><input type="checkbox" id="show-leaves" checked>Hiện tán lá <span class="muted">· bỏ chọn để thấy cành</span></label><div class="field"><label for="leaf-opacity">Độ hiện của lá <output id="leaf-opacity-out" for="leaf-opacity">24%</output></label><input id="leaf-opacity" type="range" min="0" max="70" step="1" value="24"><p class="muted">Lá mảnh, bán trong suốt. Giảm về 0% để chỉ xem phần gỗ.</p></div></div><div id="fields"></div><p class="muted">Độ uốn tạo đường cong rõ và đổi hướng; mức ngẫu nhiên tạo biến thiên hình dáng. Tỷ lệ cành võng và độ võng điều chỉnh các cành mọc xuống rồi cong lên. Đặt cả hai về 0% để có trục thẳng. Thông số cành áp dụng cho cả cành chính và cành phụ.</p><p id="dirty"></p><div class="settings-actions"><button class="primary" id="generate">Áp dụng thông số</button></div><p class="muted">Đánh dấu “Giữ” để giữ giá trị đang chọn khi tạo cây ngẫu nhiên. Các thông số còn lại sẽ được ngẫu nhiên hóa trong khoảng cho phép. Nếu giữ tất cả, chỉ hình dáng đổi. Tạo lại cây sẽ xóa lịch sử cắt.</p></details></div></div>
+
+<div id="loading"><strong>Đang dựng không gian 3D</strong><p>Đang tải Three.js. Cần kết nối Internet khi mở tệp này.</p></div>
+</div>
+<div class="status-bar" aria-label="Thống kê và trạng thái"><div class="stats"><div class="stat"><strong id="cut-count">0</strong><span>Lần cắt hiện tại</span></div><div class="stat"><strong id="branch-count">0</strong><span>Cành sau cắt</span></div><div class="stat"><strong id="part-count">0</strong><span>Thân + cành sau cắt</span></div></div><div id="status" role="status" aria-live="polite">Đang chuẩn bị mô hình…</div></div>
+</section>
+
+</main>
+<dialog class="utility-dialog" id="exercise-dialog" aria-labelledby="exercise-dialog-title"><div class="dialog-heading"><h2 id="exercise-dialog-title">Thông tin bài tập</h2><button class="dialog-close" data-close-dialog="exercise-dialog" title="Đóng" aria-label="Đóng thông tin bài tập"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><details id="exercise" open><summary>Bài tập · Lưu & tải cây</summary><label class="exercise-field">Tên / mã bài tập<input id="exercise-title" maxlength="120" placeholder="Ví dụ: Bài 01 · Tỉa cành võng"></label><label class="exercise-field">Người thực hiện<input id="exercise-worker" maxlength="120" placeholder="Họ tên công nhân"></label><label class="exercise-field">Yêu cầu bài tập<textarea id="exercise-task" maxlength="4000" placeholder="Nội dung giao bài"></textarea></label><label class="exercise-field">Nhận xét của người đánh giá<textarea id="exercise-review" maxlength="4000" placeholder="Nhập khi xem bài nộp"></textarea></label><div class="file-actions"><button id="save-exercise">Lưu cây gốc để giao bài</button><button id="choose-save-folder" hidden>Đổi thư mục lưu</button></div><p id="save-hint" class="muted"></p><input id="tree-file" type="file" accept=".json,application/json" hidden><p id="file-message" class="muted" role="status" aria-live="polite">Dùng biểu tượng thư mục để mở và đĩa mềm để lưu bài nộp trên khung nhìn 3D. File .json chứa cây gốc, kết quả cắt và thông tin bài tập. Gửi cùng TREE_LAB.html cho người thực hành.</p></details></dialog><dialog class="utility-dialog" id="history-dialog" aria-labelledby="history-dialog-title"><div class="dialog-heading"><h2 id="history-dialog-title">Lịch sử cắt</h2><button class="dialog-close" data-close-dialog="history-dialog" title="Đóng" aria-label="Đóng lịch sử cắt"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><p class="muted">Các vết cắt theo thứ tự thực hiện. Mục ghi “đã hoàn tác” có thể xem lại. Chọn một lần cắt hoặc nhận xét để xem vị trí trên cây.</p><ol id="log"><li>Chưa có thao tác cắt.</li></ol></dialog><dialog class="utility-dialog" id="help-dialog" aria-labelledby="help-dialog-title"><div class="dialog-heading"><h2 id="help-dialog-title">Hướng dẫn</h2><button class="dialog-close" data-close-dialog="help-dialog" title="Đóng" aria-label="Đóng hướng dẫn"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div class="help"><p><b>Máy tính:</b> kéo chuột trái để xoay; lăn để zoom; chuột phải hoặc Shift + kéo để di chuyển khung nhìn.</p><p><b>Điện thoại:</b> kéo một ngón để xoay; hai ngón để phóng to và di chuyển. Chạm nhanh lên thân/cành để chọn điểm cắt; kéo để xoay.</p><p><b>Thực hành:</b> chọn một điểm trên phần gỗ → kiểm tra vòng màu cam → xác nhận cắt. Có thể ẩn lá cho dễ chọn.</p><p><b>Quy tắc:</b> giữ lại phần từ gốc nhánh đến mặt cắt; loại bỏ phần phía ngoài cùng các nhánh con mọc trên phần bị cắt. Cắt thân áp dụng cùng quy tắc.</p><p><b>Giới hạn hình học:</b> cành gồm các đoạn ống thuôn thẳng nối tiếp; mặt cắt vuông góc với đoạn được chọn. Không mô phỏng vỏ rách, cây đổ, sinh trưởng hoặc lành vết thương.</p><p>Cần Internet để tải Three.js 0.170.0 từ jsDelivr. Không cần tài khoản hoặc máy chủ.</p></div><p class="notice">Đây là mô phỏng hình học. Việc ứng dụng cho phép cắt không có nghĩa vết cắt đúng kỹ thuật lâm sinh hay an toàn ngoài thực tế.</p></dialog>
+<dialog id="confirm-dialog"><h2>Xác nhận thao tác</h2><p id="confirm-text"></p><div class="row"><button id="dialog-no">Quay lại</button><button id="dialog-yes" class="danger">Thực hiện</button></div></dialog>
+<script>
+// The classic bootstrap also catches module/CDN failures before the 3D app exists.
+window.treeLabLoadTimer=setTimeout(()=>window.treeLabFatal('Tải thư viện quá lâu. Hãy kiểm tra Internet rồi tải lại trang.'),25000);
+window.treeLabFatal=(message)=>{clearTimeout(window.treeLabLoadTimer);const box=document.getElementById('loading');box.hidden=false;box.replaceChildren();const title=document.createElement('strong');title.textContent='Không thể mở mô hình 3D';const detail=document.createElement('p');detail.textContent=message;const retry=document.createElement('button');retry.textContent='Tải lại trang';retry.onclick=()=>location.reload();box.append(title,detail,retry);document.getElementById('status').textContent=message;};
+</script>
+<script type="module">
+try {
+const THREE=await import('three');
+const {OrbitControls}=await import('three/addons/controls/OrbitControls.js');
+const $=id=>document.getElementById(id);
+const fields=[['treeHeight','Chiều cao cây',6,25,.5,10,'m'],['diameter','Đường kính gốc',.25,1.2,.05,.55,'m'],['branchHeight','Chiều cao phân cành',1,6,.25,3,'m'],['mainCount','Cành chính mỗi tầng',2,7,1,4,'cành'],['levels','Số tầng cành',1,4,1,3,'tầng'],['secondary','Cành phụ mỗi cành chính',1,6,1,3,'cành'],['spread','Độ xòe tán (bán kính)',2,6,.25,3.5,'m'],['density','Độ rậm tán lá',0,100,5,40,'%'],['trunkBend','Độ uốn thân chính',0,100,5,45,'%'],['trunkRandom','Mức ngẫu nhiên thân chính',0,100,5,45,'%'],['branchBend','Độ uốn cành nhánh',0,100,5,70,'%'],['branchRandom','Mức ngẫu nhiên cành nhánh',0,100,5,55,'%'],['droopRatio','Tỷ lệ cành mọc võng xuống',0,100,5,40,'%'],['droopDepth','Độ võng xuống của cành',0,100,5,60,'%']];
+for(const [key,label,min,max,step,value,unit] of fields){const div=document.createElement('div');div.className='field';div.innerHTML=`<div class="field-heading"><label for="${key}">${label}<output id="${key}-out" for="${key}">${value} ${unit}</output></label><label class="keep-field" title="Giữ giá trị này khi tạo cây ngẫu nhiên"><input id="keep-${key}" type="checkbox" aria-label="Giữ ${label.toLowerCase()} khi tạo cây ngẫu nhiên">Giữ</label></div><input id="${key}" type="range" min="${min}" max="${max}" step="${step}" value="${value}">`;$('fields').append(div);$(key).oninput=()=>{$(key+'-out').textContent=`${$(key).value} ${unit}`;$('dirty').textContent='Nhấn “Áp dụng thông số” để dựng lại cây.';};}
+const viewport=$('viewport');let viewportAspect=null;
+let renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});}catch{throw new Error('Trình duyệt không hỗ trợ WebGL. Hãy bật tăng tốc phần cứng hoặc dùng trình duyệt mới hơn.');}
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;viewport.append(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color('#edf2ed');scene.fog=new THREE.Fog('#edf2ed',40,110);
+const camera=new THREE.PerspectiveCamera(42,1,.08,160);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.maxPolarAngle=Math.PI/2-.025;controls.minPolarAngle=.015;controls.screenSpacePanning=true;
+scene.add(new THREE.HemisphereLight(0xf5fff0,0x6d7960,1.9));const sun=new THREE.DirectionalLight(0xfff3dc,2.1);sun.position.set(9,20,12);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-14,right:14,top:23,bottom:-10,near:1,far:65});sun.shadow.bias=-.0005;scene.add(sun);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0xe5ecdf,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.035;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(60,60,0xa7baa2,0xd0dbca);grid.position.y=-.02;grid.material.transparent=true;grid.material.opacity=.55;scene.add(grid);const axes=new THREE.AxesHelper(1.6);axes.position.set(-2,.01,-2);scene.add(axes);
+// One metre in this reference model equals one world unit, as for the tree.
+function createScalePerson(){
+ const group=new THREE.Group();group.name='Nguoi tham chieu 1,7 m';group.userData.scaleReference=true;
+ const person=new THREE.Group();person.name='Co the nguoi';group.add(person);
+ // Ring sections share one mesh and material. Rows give height, half-width,
+ // half-depth and local centre offsets. Smooth normals preserve the silhouette.
+ const positions=[],indices=[],colors=[];
+ function section(color,rows,sides=10){
+  const start=positions.length/3,tint=new THREE.Color(color);
+  for(const [y,rx,rz,x=0,z=0] of rows){
+   for(let j=0;j<sides;j++){
+    const angle=2*Math.PI*j/sides;
+    positions.push(x+rx*Math.sin(angle),y,z+rz*Math.cos(angle));
+    colors.push(tint.r,tint.g,tint.b);
+   }
+  }
+  for(let i=0;i<rows.length-1;i++)for(let j=0;j<sides;j++){
+   const a=start+i*sides+j,b=start+i*sides+(j+1)%sides;
+   indices.push(a,b,a+sides,b,b+sides,a+sides);
+  }
+  const end=start+(rows.length-1)*sides;
+  for(let j=1;j<sides-1;j++)indices.push(start,start+j+1,start+j,end,end+j,end+j+1);
+ }
+ const pants=0x465454,shirt=0x626e68,vest=0xba683b,skin=0xad795a,hair=0x37302c;
+ for(const side of [-1,1]){
+  const forward=side<0?.07:-.035,ankle=side*(side<0?.132:.092),knee=side*.112,hip=side*.083+.016;
+  section(0x302e2a,[[0,.052,.127,ankle,forward+.036],[.019,.057,.135,ankle,forward+.036]]);
+  section(0x524539,[[.018,.056,.132,ankle,forward+.036],[.051,.055,.125,ankle,forward+.038],[.077,.051,.084,ankle,forward+.008],[.111,.047,.055,ankle,forward-.015]]);
+  section(pants,[[.089,.058,.065,ankle,forward-.013],[.12,.066,.068,ankle,forward-.014],[.16,.057,.063,ankle,forward-.018],[.34,.064,.079,(ankle+knee)/2,forward-.024],[.482,.061,.069,knee,forward+.009],[.515,.071,.075,knee,forward+.014],[.64,.083,.091,(knee+hip)/2,forward*.45],[.827,.097,.109,hip,0],[.905,.086,.097,hip,-.008]]);
+ }
+ section(pants,[[.799,.134,.093,.016,-.006],[.86,.163,.112,.016,-.008],[.957,.144,.1,.013,0]]);
+
+ section(vest,[[.945,.156,.115,.014,.005],[.982,.153,.11,.011,.003],[1.091,.146,.106,0,0],[1.239,.174,.122,-.005,.003],[1.32,.182,.112,-.009,-.003],[1.356,.16,.087,-.009,-.006],[1.392,.078,.065,-.01,-.008]],12);
+ section(0xb7bbab,[[1.047,.151,.110,.004,.002],[1.072,.150,.109,.002,.002]],12);
+ // One shoulder is raised and the opposite arm hangs further back.
+ for(const side of [-1,1]){
+  const lift=side<0?.012:0,reach=side<0?.069:.015;
+  const arm=rows=>rows.map(([y,rx,rz,x,z])=>[y+lift,rx,rz,side*x-.008,z]);
+  section(shirt,arm([[1.145,.056,.057,.219,.005],[1.177,.06,.063,.219,0],[1.271,.07,.077,.194,-.008],[1.319,.068,.07,.173,-.008],[1.35,.039,.042,.165,-.009]]),8);
+  section(skin,arm([[.848,.026,.032,.224,reach],[.93,.034,.04,.235,reach*.68],[1.025,.045,.05,.242,reach*.23],[1.079,.041,.044,.237,-.01],[1.165,.05,.05,.218,.004]]),8);
+  section(skin,arm([[.748,.012,.021,.22,reach+.013],[.768,.021,.034,.224,reach+.01],[.814,.025,.042,.227,reach+.009],[.852,.025,.032,.224,reach]]),8);
+  section(skin,arm([[.785,.008,.011,.208,reach+.039],[.819,.013,.017,.209,reach+.037],[.836,.011,.013,.216,reach+.026]]),6);
+ }
+ section(skin,[[1.363,.049,.047,-.011,-.004],[1.435,.048,.047,-.012,-.006],[1.47,.05,.052,-.012,.001]]);
+ section(skin,[[1.452,.031,.039,-.012,.032],[1.477,.057,.064,-.012,.018],[1.516,.071,.08,-.012,.01],[1.548,.078,.084,-.012,.004],[1.57,.076,.083,-.012,.001],[1.594,.079,.088,-.012,.002],[1.632,.070,.076,-.012,-.002]],12);
+ section(skin,[[1.526,.014,.011,-.012,.084],[1.536,.016,.015,-.012,.093],[1.548,.012,.014,-.012,.093],[1.577,.007,.008,-.012,.083]],6);
+ for(const side of [-1,1]){
+  section(skin,[[1.523,.006,.009,side*.077-.012,-.007],[1.547,.012,.017,side*.078-.012,-.01],[1.564,.008,.013,side*.078-.012,-.009]],6);
+  section(0x755440,[[1.566,.013,.003,side*.031-.012,.077],[1.571,.014,.004,side*.031-.012,.078]],6);
+  section(hair,[[1.579,.015,.004,side*.03-.012,.08],[1.583,.014,.004,side*.031-.012,.08]],6);
+ }
+ section(0x80543f,[[1.501,.017,.003,-.012,.085],[1.504,.018,.004,-.012,.086]],8);
+ const hairStart=positions.length/3;
+ section(hair,[[1.569,.081,.091,-.012,-.003],[1.635,.081,.09,-.012,-.005],[1.67,.064,.074,-.013,-.009],[1.691,.033,.043,-.017,-.009],[1.696,.012,.021,-.018,-.009]],12);
+ for(let j=0;j<12;j++)positions[(hairStart+j)*3+1]+=.046*Math.cos(j*Math.PI/6);
+ const body=new THREE.BufferGeometry();
+ body.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ body.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ body.setIndex(indices);body.computeVertexNormals();
+ const worker=new THREE.Mesh(body,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.91}));
+ worker.castShadow=true;worker.receiveShadow=true;person.add(worker);
+ // Normalize only the anatomy once, keeping the actual shoe sole at 0 and top at 1.7.
+ person.rotation.y=-.22;person.updateMatrixWorld(true);
+ const box=new THREE.Box3().setFromObject(person),factor=1.7/(box.max.y-box.min.y);person.scale.setScalar(factor);person.position.y=-box.min.y*factor;
+ const ticks=[-.40,0,0,-.40,1.7,0,-.48,0,0,-.32,0,0,-.48,1.7,0,-.32,1.7,0];
+ group.add(new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position',new THREE.Float32BufferAttribute(ticks,3)),new THREE.LineBasicMaterial({color:0x477c5c})));
+ group.userData.appearance='anatomical-worker';
+ return group;
+}
+const humanReference=createScalePerson();scene.add(humanReference);
+function positionHumanReference(){humanReference.position.set(Math.max(.95,config.diameter/2+.7),0,.65);}
+function updateHumanLabel(id,left,width,sceneHeight){
+ const label=$(id),bottom=humanReference.position.clone().add(new THREE.Vector3(-.40,0,0)).project(camera),top=humanReference.position.clone().add(new THREE.Vector3(-.40,1.7,0)).project(camera);
+ const bx=left+(bottom.x+1)*width/2,by=(1-bottom.y)*sceneHeight/2,tx=left+(top.x+1)*width/2,ty=(1-top.y)*sceneHeight/2,dx=tx-bx,dy=ty-by,length=Math.hypot(dx,dy);
+ const mx=(bottom.x+top.x)/2,my=(bottom.y+top.y)/2;
+ const visible=bottom.z>=-1&&bottom.z<=1&&top.z>=-1&&top.z<=1&&Math.abs(mx)<=1&&Math.abs(my)<=1&&length>6;label.hidden=!visible;
+ if(visible){let angle=Math.atan2(dy,dx)*180/Math.PI;if(angle>90)angle-=180;if(angle<-90)angle+=180;label.style.left=((bx+tx)/2+dy/length*9)+'px';label.style.top=((by+ty)/2-dx/length*9)+'px';label.style.transform='translate(-50%,-50%) rotate('+angle+'deg)';}
+}
+const wood=new THREE.MeshStandardMaterial({color:0x84664a,roughness:.94});const cutWood=new THREE.MeshStandardMaterial({color:0xe3be82,roughness:.9,side:THREE.DoubleSide});
+// A thin pointed blade with a raised midrib; double-sided, with no solid volume.
+function makeLeafGeometry(){const positions=[],indices=[];const rows=9;for(let i=0;i<rows;i++){const t=i/(rows-1),y=t-.5;const w=Math.pow(Math.sin(Math.PI*t),.85)*.17;const curl=.07*Math.sin(Math.PI*t);positions.push(-w,y,curl,0,y,curl+.025*Math.sin(Math.PI*t),w,y,curl);if(i<rows-1){const j=i*3;indices.push(j,j+3,j+1,j+1,j+3,j+4,j+1,j+4,j+2,j+2,j+4,j+5);}}const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);geometry.computeVertexNormals();return geometry;}
+const leafMaterial=new THREE.MeshStandardMaterial({color:0x83a76b,roughness:.92,side:THREE.DoubleSide,transparent:true,opacity:.24,depthWrite:false});const leafGeometry=makeLeafGeometry();
+let treeGroup=new THREE.Group();scene.add(treeGroup);let beforeGroup=null,viewMode="after",exerciseId=newExerciseId();
+const marker=new THREE.Group();const ring=new THREE.Mesh(new THREE.TorusGeometry(1,.065,8,48),new THREE.MeshBasicMaterial({color:0xff982d,depthTest:false}));const dot=new THREE.Mesh(new THREE.SphereGeometry(.075,12,8),new THREE.MeshBasicMaterial({color:0xffb23c,depthTest:false}));ring.renderOrder=20;dot.renderOrder=21;marker.add(ring,dot);marker.visible=false;scene.add(marker);
+let nodes=[],nodeMap=new Map(),woodMeshes=[],leafMesh=null,config,seed=73428,history=[],cursor=0,selected=null,pendingAction=null,ready=false;
+let focusedCut=false,reviewGroup=null,reviewIndex=-1,reviewCamera=null;
+const removedWood=new THREE.MeshStandardMaterial({color:0xd04438,roughness:.88});
+const removedLeafColor=new THREE.Color(0xff4530);
+let pointers=new Map(),gesture=null;
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+function newExerciseId(){return 'TREE-'+Array.from(crypto.getRandomValues(new Uint32Array(4)),v=>v.toString(16).padStart(8,'0')).join('');}
+function rng(seedValue){let state=seedValue>>>0;return()=>{state+=0x6D2B79F5;let x=state;x=Math.imul(x^x>>>15,x|1);x^=x+Math.imul(x^x>>>7,x|61);return((x^x>>>14)>>>0)/4294967296;};}
+const readConfig=()=>Object.fromEntries(fields.map(([key])=>[key,Number($(key).value)]));
+function makeNode(parent,attachT,points,r0,r1,kind){const node={id:kind==='trunk'?'T0':`C${String(nodes.length).padStart(3,'0')}`,parentId:parent?.id??null,attachT,start:points[0],end:points.at(-1),points,radiusStart:r0,radiusEnd:r1,children:[],meshes:[],leaves:[],limit:1,visible:true};nodes.push(node);nodeMap.set(node.id,node);if(parent)parent.children.push(node.id);return node;}
+// Parameters are normalized to the original branch length (not the remaining stump).
+function sample(node,t){const scaled=clamp(t,0,1)*(node.points.length-1),i=Math.min(node.points.length-2,Math.floor(scaled));return node.points[i].clone().lerp(node.points[i+1],scaled-i);}
+function radius(node,t){return THREE.MathUtils.lerp(node.radiusStart,node.radiusEnd,t);}
+function direction(node,t){const i=Math.min(node.points.length-2,Math.floor(clamp(t,0,1)*(node.points.length-1)));return node.points[i+1].clone().sub(node.points[i]).normalize();}
+// Cubic growth paths have independently directed handles. A drooping branch
+// starts downward, reaches a low point, then turns upward toward its tip.
+function branchPath(base,angle,reach,rise,random,segments,drooping=false){
+ const bend=config.branchBend/100,variation=config.branchRandom/100;
+ drooping=drooping&&bend>0&&config.droopDepth>0;
+ const side=random()<.5?-1:1,side2=(random()-.5)*2;
+ const sideways=reach*bend*(.35+.35*variation);
+ const depth=reach*(config.droopDepth/100)*bend*(.85+.4*random());
+ const floorY=.22;
+ const local=(radial,y,lateral)=>new THREE.Vector3(base.x+Math.cos(angle)*radial-Math.sin(angle)*lateral,Math.max(floorY,base.y+y),base.z+Math.sin(angle)*radial+Math.cos(angle)*lateral);
+ const endRise=drooping?rise*(1-.35*bend):rise;
+ const p1=local(reach*(1/3-.12*bend),drooping?-depth:rise*(1/3-.25*bend),sideways*side);
+ const p2=local(reach*(2/3+.12*bend),drooping?-depth*.80:rise*(2/3-.32*bend),-sideways*side*(.45+.5*variation)+sideways*variation*side2);
+ const tip=local(reach,endRise,sideways*variation*side2*.5);
+ const curve=new THREE.CubicBezierCurve3(base.clone(),p1,p2,tip);
+ return curve.getSpacedPoints(segments);
+}
+function populateLeaves(node,count,from,random){for(let l=0;l<count;l++){
+ const t=from+random()*(1-from),azimuth=random()*Math.PI*2,offset=.10+random()*.22;
+ const pos=sample(node,t).add(new THREE.Vector3(Math.cos(azimuth)*offset,(random()-.4)*.20,Math.sin(azimuth)*offset));
+ node.leaves.push({t,pos,scale:new THREE.Vector3(.8+random()*.5,.26+random()*.19,1),rotation:new THREE.Euler((random()-.5)*2,azimuth,(random()-.5)*2.5),color:new THREE.Color().setHSL(.23+random()*.07,.28+random()*.18,.42+random()*.13)});
+}}
+function makeTree(){nodes=[];nodeMap=new Map();const random=rng(seed),leafRandom=rng(seed^0x514eaf21);
+ const H=config.treeHeight,fork=Math.min(config.branchHeight,H*.67);
+ const trunkBend=config.trunkBend/100,trunkVariation=config.trunkRandom/100,branchVariation=config.branchRandom/100;
+ const heading=random()*Math.PI*2,phase=random()*Math.PI*2;
+ const trunkPoints=Array.from({length:33},(_,i)=>{const t=i/32;
+ const envelope=Math.sin(Math.PI*t);
+ const lean=H*trunkBend*.18*t*t;
+ const sweep=H*trunkBend*.19*Math.sin(t*Math.PI*2)*envelope;
+ const wavex=H*trunkVariation*.11*envelope*(Math.sin(t*Math.PI*3+phase)-Math.sin(phase))*t;
+ const wavez=H*trunkVariation*.10*envelope*(Math.cos(t*Math.PI*2.5+phase)-Math.cos(phase))*t;
+ return new THREE.Vector3(Math.cos(heading)*lean-Math.sin(heading)*sweep+wavex,H*t,Math.sin(heading)*lean+Math.cos(heading)*sweep+wavez);
+ });
+ const trunk=makeNode(null,0,trunkPoints,config.diameter/2,.025,'trunk');
+ for(let level=0;level<config.levels;level++){
+ const y=fork+(H*.78-fork)*(level/Math.max(1,config.levels-1));
+ for(let b=0;b<config.mainCount;b++){
+ const angle=b/config.mainCount*Math.PI*2+level*1.37+(random()-.5)*1.1*branchVariation;
+ const attachT=clamp((y+(random()-.5)*H*.08*branchVariation)/H,.12,.83);
+ const base=sample(trunk,attachT),reach=config.spread*(1-level/config.levels*.25)*(1+(random()-.5)*.65*branchVariation);
+ const rise=Math.min(H-base.y,reach*(.8+(random()-.5)*.6*branchVariation));
+ // Distribute sagging branches across levels instead of relying on a rare draw.
+ const drooping=(((b+level*2)%config.mainCount)*config.levels+level+.5)/(config.mainCount*config.levels)<config.droopRatio/100;
+ const points=branchPath(base,angle,reach,rise,random,24,drooping);
+ const r0=Math.min(radius(trunk,attachT)*.62,config.diameter*.24)*(1+(random()-.5)*.25*branchVariation);
+ const main=makeNode(trunk,attachT,points,r0,.018,'branch');
+ for(let j=0;j<config.secondary;j++){
+ const at=.3+(j+.5+(random()-.5)*.45*branchVariation)/(config.secondary+1)*.65;
+ const root=sample(main,at),a=angle+(j%2?1:-1)*(.85+(random()-.5)*1.1*branchVariation);
+ const len=reach*(.4+(random()-.5)*.4*branchVariation),available=Math.max(.2,H-root.y);
+ const subDrooping=random()<config.droopRatio/100*.65;
+ const pts=branchPath(root,a,len,Math.min(available,len*.95),random,16,subDrooping);
+ const sub=makeNode(main,at,pts,radius(main,at)*.48,.009,'branch');
+ populateLeaves(sub,Math.round(config.density*.24),.18,leafRandom);
+ }
+ populateLeaves(main,Math.round(config.density*.10),.55,leafRandom);
+ }}
+ // The terminal leader belongs to T0, so its foliage follows trunk cuts/undo.
+ if(config.density>0){const count=Math.max(6,Math.round(config.density*.6));populateLeaves(trunk,count,.78,leafRandom);const tipLeaf=trunk.leaves.at(-1);tipLeaf.t=.998;tipLeaf.pos=sample(trunk,tipLeaf.t).add(new THREE.Vector3(.06,.01,0));}
+}
+function clearGeometry(){treeGroup.traverse(obj=>{if(obj.isMesh&&obj.geometry!==leafGeometry)obj.geometry.dispose();if(obj.isInstancedMesh)obj.dispose();});scene.remove(treeGroup);treeGroup=new THREE.Group();scene.add(treeGroup);woodMeshes=[];leafMesh=null;}
+function addSegment(node,a,b,ra,rb,target=treeGroup,register=true,material=wood){const delta=b.clone().sub(a),len=delta.length();if(len<1e-6)return;const geom=new THREE.CylinderGeometry(rb,ra,len,10,1,false);const mesh=new THREE.Mesh(geom,material);mesh.position.copy(a).add(b).multiplyScalar(.5);mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),delta.normalize());mesh.castShadow=true;mesh.receiveShadow=true;mesh.userData.nodeId=node.id;target.add(mesh);if(register){node.meshes.push(mesh);woodMeshes.push(mesh);}}
+// Replay commands against an immutable procedural source. A child's attachment
+// is compared to its parent's remaining fraction, so lower forks survive a cut.
+function remainingAt(end){
+ const limits=new Map(nodes.map(n=>[n.id,1]));
+ for(let i=0;i<end;i++){const c=history[i];limits.set(c.id,Math.min(c.t,limits.get(c.id)));}
+ for(const n of nodes)if(n.parentId&&n.attachT>=limits.get(n.parentId)-1e-7)limits.set(n.id,0);
+ return limits;
+}
+function drawState(target,limits,after=null){
+ const leaves=[];
+ for(const n of nodes){
+  const limit=limits.get(n.id),kept=after?after.get(n.id):limit;
+  if(!after){n.limit=limit;n.visible=limit>0;n.meshes=[];}
+  if(!limit)continue;
+  const steps=n.points.length-1;
+  const segment=(a,b,material)=>addSegment(n,sample(n,a),sample(n,b),radius(n,a),radius(n,b),target,!after,material);
+  for(let i=0;i<steps;i++){
+   const a=i/steps,b=Math.min((i+1)/steps,limit);
+   if(a>=limit-1e-8)break;
+   if(a<kept)segment(a,Math.min(b,kept),wood);
+   if(b>kept)segment(Math.max(a,kept),b,removedWood);
+  }
+  if(limit<1-1e-7){
+   const cap=new THREE.Mesh(new THREE.CircleGeometry(radius(n,limit)*1.005,16),kept<limit?removedWood:cutWood);
+   cap.position.copy(sample(n,limit)).addScaledVector(direction(n,limit),.001);
+   cap.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),direction(n,limit));target.add(cap);
+  }
+  for(const leaf of n.leaves)if(leaf.t<limit)leaves.push([leaf,leaf.t>=kept?removedLeafColor:leaf.color]);
+ }
+ if(!leaves.length)return null;
+ const mesh=new THREE.InstancedMesh(leafGeometry,leafMaterial,leaves.length),dummy=new THREE.Object3D();
+ leaves.forEach(([leaf,color],i)=>{dummy.position.copy(leaf.pos);dummy.scale.copy(leaf.scale);dummy.rotation.copy(leaf.rotation);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);mesh.setColorAt(i,color);});
+ mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.visible=$('show-leaves').checked;target.add(mesh);return mesh;
+}
+function rebuild(){positionHumanReference();clearGeometry();leafMesh=drawState(treeGroup,remainingAt(cursor));updateUI();updateTreeInfo();}
+function updateUI(){$('selection').hidden=!selected;document.querySelector('.scene-area').classList.toggle('has-selection',Boolean(selected));const count=nodes.filter(n=>n.visible).length;$('cut-count').textContent=cursor;$('branch-count').textContent=Math.max(0,count-(nodeMap.get('T0')?.visible?1:0));$('part-count').textContent=count;$('undo').disabled=!cursor||viewMode!=='after';$('redo').disabled=cursor>=history.length||viewMode!=='after';$('reset').disabled=!history.length;$('cut').disabled=!selected||viewMode!=='after';$('cancel').disabled=!selected;
+$('log').replaceChildren();if(!history.length){const li=document.createElement('li');li.textContent='Chưa có thao tác cắt.';$('log').append(li);}else history.forEach((c,i)=>{const li=document.createElement('li');const button=document.createElement("button");button.textContent=`Lần ${i+1} · ${c.id==='T0'?'Thân':c.id} · ${(c.t*100).toFixed(1)}% chiều dài${i>=cursor?' (đã hoàn tác)':''}`;if(c.note)button.textContent+=' · '+c.note;button.onclick=()=>startReview(i);li.append(button);$('log').append(li);});}
+function setStatus(message){$('status').textContent=message;}
+function clearSelection(){selected=null;marker.visible=false;$('selection').innerHTML='Chưa chọn vị trí.<br><span class="muted">Nhấp/chạm lên thân hoặc cành để chọn điểm cắt.</span>';updateUI();}
+function markCut(node,t){const pos=sample(node,t);marker.position.copy(pos);ring.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),direction(node,t));ring.scale.setScalar(Math.max(.10,radius(node,t)*1.25));marker.visible=true;}
+function focusCut(node,t){
+ const offset=camera.position.clone().sub(controls.target).normalize();
+ const distance=Math.max(2,radius(node,t)*14)/Math.min(1,viewportAspect||1);
+ focusedCut=true;controls.minDistance=.28;controls.target.copy(sample(node,t));
+ camera.position.copy(controls.target).addScaledVector(offset,distance);controls.update();
+}
+function startReview(index){
+ if(reviewGroup)endReview();
+ const c=history[index],node=nodeMap.get(c.id);
+ reviewCamera={position:camera.position.clone(),target:controls.target.clone(),min:controls.minDistance,focused:focusedCut};
+ reviewIndex=index;reviewGroup=new THREE.Group();scene.add(reviewGroup);
+ drawState(reviewGroup,remainingAt(index),remainingAt(index+1));clearSelection();markCut(node,c.t);focusCut(node,c.t);
+ treeGroup.visible=false;if(beforeGroup)beforeGroup.visible=false;
+ $('review-title').textContent='Lần cắt '+(index+1)+' · '+(c.id==='T0'?'Thân chính':c.id)+(index>=cursor?' (đã hoàn tác)':'');
+ $('cut-note').value=c.note||'';$('note-details').open=Boolean(c.note);
+ $('history-dialog').close();$('review-panel').hidden=false;document.querySelector('.scene-area').classList.add('reviewing');
+ $('end-review').focus();setStatus('Đang xem cây ngay trước lần cắt '+(index+1)+'.');
+}
+function endReview(){
+ if(!reviewGroup)return;
+ reviewGroup.traverse(obj=>{if(obj.isMesh&&obj.geometry!==leafGeometry)obj.geometry.dispose();if(obj.isInstancedMesh)obj.dispose();});
+ scene.remove(reviewGroup);reviewGroup=null;reviewIndex=-1;marker.visible=false;
+ camera.position.copy(reviewCamera.position);controls.target.copy(reviewCamera.target);controls.minDistance=reviewCamera.min;focusedCut=reviewCamera.focused;controls.update();
+ $('review-panel').hidden=true;document.querySelector('.scene-area').classList.remove('reviewing');
+ setViewMode(viewMode);$('open-history').focus();
+}
+$('end-review').onclick=endReview;
+$('cut-note').oninput=()=>{if(reviewIndex<0)return;const command=history[reviewIndex];if($('cut-note').value)command.note=$('cut-note').value;else delete command.note;};
+function selectNode(node,t){t=clamp(t,.002,node.limit);selected={id:node.id,t};const pos=sample(node,t);markCut(node,t);const length=node.points.slice(1).reduce((sum,p,i)=>sum+p.distanceTo(node.points[i]),0);$('selection').innerHTML=`<button id="focus-cut" title="Phóng to điểm cắt" aria-label="Phóng to điểm cắt"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6M7 10h6m-3-3v6"/></svg></button><strong>${node.id==='T0'?'Thân chính':'Cành '+node.id}</strong> · ${node.parentId?'nhánh cha '+node.parentId:'gốc cây'}<br>Đường kính ước tính: <b>${(radius(node,t)*200).toFixed(1)} cm</b><br>Vị trí: ${(t*100).toFixed(1)}% từ gốc nhánh (~${(length*t).toFixed(2)} m)<br>Cao độ: ${pos.y.toFixed(2)} m`;$('focus-cut').onclick=()=>focusCut(node,t);updateUI();setStatus('Vòng cam là mặt cắt dự kiến. Nhấn “Xác nhận cắt” để xem bước xác nhận.');}
+function projectPoint(node,point){let best={t:0,d:Infinity};for(let i=0;i<node.points.length-1;i++){const a=node.points[i],delta=node.points[i+1].clone().sub(a);const local=clamp(point.clone().sub(a).dot(delta)/delta.lengthSq(),0,1);const t=(i+local)/(node.points.length-1);if(t>node.limit+1e-6)continue;const d=a.clone().addScaledVector(delta,local).distanceToSquared(point);if(d<best.d)best={t,d};}return best.t;}
+const raycaster=new THREE.Raycaster();
+function pick(clientX,clientY){if(!ready||reviewGroup||viewMode!=='after')return;const rect=renderer.domElement.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((clientX-rect.left)/rect.width*2-1,-(clientY-rect.top)/rect.height*2+1),camera);treeGroup.updateMatrixWorld(true);const hit=raycaster.intersectObjects(woodMeshes,false)[0];if(hit){const n=nodeMap.get(hit.object.userData.nodeId);selectNode(n,projectPoint(n,hit.point));}else{clearSelection();setStatus('Chưa chạm vào phần gỗ. Hãy ẩn tán lá hoặc xoay cây để chọn cành rõ hơn.');}}
+renderer.domElement.addEventListener('pointerdown',e=>{pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===1)gesture={id:e.pointerId,x:e.clientX,y:e.clientY,time:performance.now(),moved:false,multi:false};else if(gesture)gesture.multi=true;});
+renderer.domElement.addEventListener('pointermove',e=>{if(gesture&&Math.hypot(e.clientX-gesture.x,e.clientY-gesture.y)>7)gesture.moved=true;});
+renderer.domElement.addEventListener('pointerup',e=>{pointers.delete(e.pointerId);if(gesture&&gesture.id===e.pointerId&&!gesture.multi&&!gesture.moved&&performance.now()-gesture.time<650&&e.button===0)pick(e.clientX,e.clientY);if(!pointers.size)gesture=null;});
+renderer.domElement.addEventListener('pointercancel',e=>{pointers.delete(e.pointerId);gesture=null;});
+function fitCamera(view='default'){focusedCut=false;const H=config.treeHeight;const span=Math.max(H,config.spread*2.7);const target=new THREE.Vector3(0,H*.48,0);controls.target.copy(target);const rect=viewport.getBoundingClientRect(),aspect=rect.width/Math.max(1,rect.height);const distance=span*2.05/Math.min(1,aspect)*(viewMode==='split'?1.8:1);if(view==='top')camera.position.copy(target).add(new THREE.Vector3(0,distance,.015));else if(view==='front')camera.position.copy(target).add(new THREE.Vector3(0,1,distance));else camera.position.copy(target).add(new THREE.Vector3(distance*.64,distance*.25,distance*.77));controls.minDistance=Math.max(config.spread*1.35,config.treeHeight*.55);controls.maxDistance=distance*2.2;camera.far=Math.max(160,controls.maxDistance*2);camera.updateProjectionMatrix();controls.update();}
+function build(newSeed=false){clearBeforeGroup();viewMode="after";exerciseId=newExerciseId();if(newSeed)seed=crypto.getRandomValues(new Uint32Array(1))[0];config=readConfig();history=[];cursor=0;makeTree();clearSelection();rebuild();setViewMode("after");fitCamera();$('dirty').textContent='';ready=true;setStatus('Kéo để xoay 360° · Lăn / chụm để zoom · Nhấp/chạm lên cành để chọn điểm cắt.');}
+function ask(message,action){pendingAction=action;$('confirm-text').textContent=message;$('confirm-dialog').showModal();$('dialog-no').focus();}
+$('dialog-no').onclick=()=>{$('confirm-dialog').close();pendingAction=null;};$('confirm-dialog').addEventListener('cancel',()=>{pendingAction=null;});$('dialog-yes').onclick=()=>{const action=pendingAction;pendingAction=null;$('confirm-dialog').close();action?.();};
+$('cut').onclick=()=>{if(!selected)return;const command={...selected};ask(`Cắt ${command.id==='T0'?'thân chính':'cành '+command.id} tại ${(command.t*100).toFixed(1)}% chiều dài? Phần phía ngoài và các nhánh con mọc trên phần đó sẽ bị loại bỏ. Có thể hoàn tác.`,()=>{history=history.slice(0,cursor);history.push(command);cursor++;clearSelection();rebuild();setStatus('Đã cắt đúng phần phía ngoài điểm chọn. Dùng Hoàn tác để khôi phục.');});};
+$('cancel').onclick=()=>{clearSelection();setStatus('Đã hủy điểm chọn.');};
+$('undo').onclick=()=>{if(cursor){cursor--;clearSelection();rebuild();setStatus('Đã hoàn tác vết cắt gần nhất.');}};
+$('redo').onclick=()=>{if(cursor<history.length){cursor++;clearSelection();rebuild();setStatus('Đã làm lại vết cắt.');}};
+$('reset').onclick=()=>ask('Khôi phục cây với đúng hình dáng và thông số ban đầu? Lịch sử cắt sẽ được xóa.',()=>{history=[];cursor=0;clearSelection();rebuild();setStatus('Đã khôi phục cây ban đầu, giữ nguyên hình dáng và cấu hình.');});
+function randomizeFields(random=Math.random){for(const [key,,min,max,step,,unit] of fields){if($('keep-'+key).checked)continue;const count=Math.round((max-min)/step);const value=Number((min+Math.floor(random()*(count+1))*step).toFixed(6));$(key).value=value;$(key+'-out').textContent=`${value} ${unit}`;}}
+for(const [id,newSeed] of [['generate',false],['randomize',true]])$(id).onclick=()=>{const action=()=>{if(newSeed)randomizeFields();build(newSeed);};if(history.length)ask('Tạo lại cây sẽ xóa toàn bộ lịch sử cắt hiện tại. Tiếp tục?',action);else action();};
+$('show-leaves').onchange=()=>{if(leafMesh)leafMesh.visible=$('show-leaves').checked;};
+$('leaf-opacity').oninput=()=>{const value=Number($('leaf-opacity').value);leafMaterial.opacity=value/100;$('leaf-opacity-out').textContent=value+'%';};
+$('front').onclick=()=>fitCamera('front');$('top').onclick=()=>fitCamera('top');$('camera-reset').onclick=()=>fitCamera();
+function resize(){const {width:w,height:h}=viewport.getBoundingClientRect();if(w<1||h<1)return;const aspect=w/h;if(ready&&viewportAspect){const scale=Math.max(1,1/aspect)/Math.max(1,1/viewportAspect);camera.position.sub(controls.target).multiplyScalar(scale).add(controls.target);controls.maxDistance*=scale;camera.far=Math.max(160,controls.maxDistance*2);}viewportAspect=aspect;renderer.setSize(w,h,false);camera.aspect=aspect;camera.updateProjectionMatrix();}
+function clearBeforeGroup(){if(!beforeGroup)return;beforeGroup.traverse(obj=>{if(obj.isMesh&&obj.geometry!==leafGeometry)obj.geometry.dispose();if(obj.isInstancedMesh)obj.dispose();});scene.remove(beforeGroup);beforeGroup=null;}
+function ensureBeforeGroup(){if(beforeGroup)return;beforeGroup=new THREE.Group();const leaves=[];for(const n of nodes){for(let i=0;i<n.points.length-1;i++)addSegment(n,n.points[i],n.points[i+1],radius(n,i/(n.points.length-1)),radius(n,(i+1)/(n.points.length-1)),beforeGroup,false);leaves.push(...n.leaves);}if(leaves.length){const mesh=new THREE.InstancedMesh(leafGeometry,leafMaterial,leaves.length),dummy=new THREE.Object3D();leaves.forEach((leaf,i)=>{dummy.position.copy(leaf.pos);dummy.rotation.copy(leaf.rotation);dummy.scale.copy(leaf.scale);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);mesh.setColorAt(i,leaf.color);});mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.visible=$('show-leaves').checked;mesh.userData.originalLeaves=true;beforeGroup.add(mesh);}scene.add(beforeGroup);beforeGroup.visible=false;}
+function setViewMode(mode){const previous=viewMode;viewMode=mode;renderer.domElement.style.cursor=mode==='after'?'crosshair':'grab';if((mode==='split')!==(previous==='split')){const factor=mode==='split'?1.8:1/1.8;camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.maxDistance*=factor;camera.far=Math.max(160,controls.maxDistance*2);camera.updateProjectionMatrix();}if(mode!=='after')ensureBeforeGroup();clearSelection();for(const value of ['after','before','split'])$('view-'+value).setAttribute('aria-pressed',String(value===mode));$('compare-labels').style.display=mode==='split'?'block':'none';treeGroup.visible=mode==='after';if(beforeGroup)beforeGroup.visible=mode==='before';updateTreeInfo();setStatus(mode==='after'?'Đang xem kết quả sau cắt. Bạn có thể tiếp tục thực hành.':mode==='before'?'Đang xem cây gốc trước mọi thao tác cắt. Lịch sử được giữ nguyên.':'Trái: cây gốc · Phải: kết quả hiện tại. Xoay và zoom đồng bộ; chọn “Sau cắt” để tiếp tục thực hành.');}
+for(const mode of ['after','before','split'])$('view-'+mode).onclick=()=>setViewMode(mode);
+for(const [button,dialog] of [['open-exercise','exercise-dialog'],['open-history','history-dialog'],['open-help','help-dialog']])$(button).onclick=()=>{if(reviewGroup)endReview();$(dialog).showModal();};
+for(const button of document.querySelectorAll('[data-close-dialog]'))button.onclick=()=>$(button.dataset.closeDialog).close();
+for(const detail of [$('tree-info'),$('settings')])detail.addEventListener('toggle',()=>{if(detail.open&&window.innerWidth<=760){const other=detail.id==='settings'?$('tree-info'):$('settings');other.open=false;}});
+
+function updateTreeInfo(){if(!config||!nodes.length)return;const values=$('tree-values');values.replaceChildren();$('tree-summary').textContent=`Cây ${config.treeHeight} m · Gốc ${(config.diameter*100).toFixed(0)} cm · ${viewMode==='before'?'Trước cắt':viewMode==='split'?'So sánh':'Sau cắt'}`;for(const [key,label,,,,,unit] of fields){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=`${config[key]} ${unit}`;values.append(dt,dd);}const box=new THREE.Box3();for(const n of nodes)if(n.visible){for(let i=0;i<n.points.length;i++){const t=i/(n.points.length-1);if(t<n.limit)box.expandByPoint(n.points[i]);}box.expandByPoint(sample(n,n.limit));}const rows=[['Cành gốc / cành còn lại',`${nodes.length-1} / ${nodes.filter(n=>n.visible&&n.parentId).length}`],['Chiều cao còn lại',box.isEmpty()?'0 m':`${box.max.y.toFixed(2)} m`],['Vết cắt đang áp dụng (sau cắt)',String(cursor)],['Bài tập',$('exercise-title').value||'Chưa đặt tên'],['Người thực hiện',$('exercise-worker').value||'Chưa nhập']];for(const [label,value] of rows){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=value;dd.style.maxWidth='150px';dd.style.overflowWrap='anywhere';values.append(dt,dd);}}
+for(const id of ['exercise-title','exercise-worker'])$(id).oninput=updateTreeInfo;
+const previousLeafChange=$('show-leaves').onchange;$('show-leaves').onchange=()=>{previousLeafChange();beforeGroup?.traverse(obj=>{if(obj.userData.originalLeaves)obj.visible=$('show-leaves').checked;});};
+function snapshotTree(){return nodes.map(n=>({id:n.id,parentId:n.parentId,attachT:n.attachT,points:n.points.map(p=>p.toArray()),radiusStart:n.radiusStart,radiusEnd:n.radiusEnd,leaves:n.leaves.map(l=>({t:l.t,pos:l.pos.toArray(),scale:l.scale.toArray(),rotation:[l.rotation.x,l.rotation.y,l.rotation.z],color:[l.color.r,l.color.g,l.color.b]}))}));}
+function makeSaveData(original=false){return {format:'tree-lab-exercise',version:1,modelVersion:'2026-11-16-curves',exerciseId,savedAt:new Date().toISOString(),kind:original?'assignment':'submission',metadata:{title:$('exercise-title').value,worker:original?'':$('exercise-worker').value,task:$('exercise-task').value,review:original?'':$('exercise-review').value},tree:{seed,config:{...config},nodes:snapshotTree()},history:original?[]:history.map(c=>({...c})),cursor:original?0:cursor,display:{showLeaves:$('show-leaves').checked,leafOpacity:Number($('leaf-opacity').value)},randomization:{lockedFields:fields.filter(([key])=>$('keep-'+key).checked).map(([key])=>key)}};}
+// Treat imported files as data. Validate the complete original model and replay
+// commands before touching the current session; never regenerate from a seed.
+function validateSaveData(data){
+ const fail=message=>{throw new Error(message);};const number=(v,min,max,label)=>{if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max)fail('Giá trị không hợp lệ: '+label);return v;};
+ const text=(v,max,label)=>{if(typeof v!=='string'||v.length>max)fail('Nội dung không hợp lệ: '+label);return v;};
+ const vector=(v,min,max,label)=>{if(!Array.isArray(v)||v.length!==3)fail('Tọa độ không hợp lệ: '+label);return v.map(x=>number(x,min,max,label));};
+ if(!data||data.format!=='tree-lab-exercise'||data.version!==1)fail('Đây không phải file bài tập TREE LAB phiên bản được hỗ trợ.');
+ const cfg={};for(const [key,,min,max,step] of fields){const value=number(data.tree?.config?.[key],min,max,key);if(Math.abs((value-min)/step-Math.round((value-min)/step))>1e-6)fail('Thông số cây sai bước điều chỉnh: '+key);cfg[key]=value;}
+ const savedSeed=number(data.tree?.seed,0,4294967295,'hạt ngẫu nhiên');if(!Number.isInteger(savedSeed))fail('Hạt ngẫu nhiên không hợp lệ.');
+ const input=data.tree?.nodes;if(!Array.isArray(input)||input.length<2||input.length>250)fail('Số nhánh trong file không hợp lệ.');
+ const map=new Map();let leafCount=0;const cleanNodes=[];
+ for(const [index,n] of input.entries()){
+  if(!n||typeof n.id!=='string'||!(/^(T0|C\d{3})$/).test(n.id)||map.has(n.id))fail('Mã nhánh trùng hoặc không hợp lệ.');
+  if(index===0?(n.id!=='T0'||n.parentId!==null):(n.id==='T0'||!map.has(n.parentId)))fail('Quan hệ cha–con trong file không hợp lệ.');
+  const attachT=number(n.attachT,0,1,'điểm mọc');if(!Array.isArray(n.points)||n.points.length<2||n.points.length>65)fail('Đường trục nhánh không hợp lệ.');
+  const points=n.points.map(p=>vector(p,-100,100,'đường trục'));for(let i=1;i<points.length;i++)if(Math.hypot(...points[i].map((v,j)=>v-points[i-1][j]))<1e-6)fail('Có đoạn nhánh bị trùng điểm.');
+  if(index>0){const parent=map.get(n.parentId),at=attachT*(parent.points.length-1),i=Math.min(parent.points.length-2,Math.floor(at));const root=parent.points[i].map((v,j)=>v+(parent.points[i+1][j]-v)*(at-i));if(Math.hypot(...root.map((v,j)=>v-points[0][j]))>1e-4)fail('Cành con không nối đúng cành cha.');}
+  const r0=number(n.radiusStart,.001,3,'bán kính gốc'),r1=number(n.radiusEnd,.001,r0,'bán kính đầu');
+  if(!Array.isArray(n.leaves)||n.leaves.length>100)fail('Dữ liệu lá không hợp lệ.');leafCount+=n.leaves.length;if(leafCount>12000)fail('File có quá nhiều lá.');
+  const leaves=n.leaves.map(l=>({t:number(l.t,0,1,'vị trí lá'),pos:vector(l.pos,-100,100,'lá'),scale:vector(l.scale,.001,5,'kích thước lá'),rotation:vector(l.rotation,-20,20,'góc lá'),color:vector(l.color,0,1,'màu lá')}));
+  const clean={id:n.id,parentId:n.parentId,attachT,points,radiusStart:r0,radiusEnd:r1,leaves};map.set(n.id,clean);cleanNodes.push(clean);
+ }
+ if(!Array.isArray(data.history)||data.history.length>5000)fail('Lịch sử cắt không hợp lệ.');const limits=new Map(cleanNodes.map(n=>[n.id,1]));const commands=data.history.map(c=>{if(!c||!map.has(c.id))fail('Lịch sử tham chiếu tới nhánh không tồn tại.');const t=number(c.t,.002,1,'vị trí cắt');let node=map.get(c.id);if(t>limits.get(node.id)+1e-7)fail('Vết cắt nằm ngoài phần nhánh còn lại.');while(node.parentId){const parent=map.get(node.parentId);if(node.attachT>=limits.get(parent.id)-1e-7)fail('Lịch sử cắt vào cành đã bị loại bỏ.');node=parent;}limits.set(c.id,Math.min(limits.get(c.id),t));return c.note===undefined?{id:c.id,t}:{id:c.id,t,note:text(c.note,1000,'nhận xét lần cắt')};});
+ const savedCursor=number(data.cursor,0,commands.length,'vị trí lịch sử');if(!Number.isInteger(savedCursor))fail('Vị trí lịch sử không hợp lệ.');
+ const meta=data.metadata;if(!meta)fail('Thiếu thông tin bài tập.');const metadata={title:text(meta.title,120,'tên bài'),worker:text(meta.worker,120,'người làm'),task:text(meta.task,4000,'yêu cầu'),review:text(meta.review,4000,'nhận xét')};
+ const id=text(data.exerciseId,100,'mã bài');if(!id)fail('Thiếu mã bài.');if(typeof data.display?.showLeaves!=='boolean')fail('Thiếu tùy chọn hiển thị lá.');
+ const opacity=number(data.display.leafOpacity,0,70,'độ hiện lá');
+ const lockedFields=data.randomization===undefined?[]:data.randomization?.lockedFields;
+ if(!Array.isArray(lockedFields)||lockedFields.length>fields.length||new Set(lockedFields).size!==lockedFields.length||lockedFields.some(key=>!fields.some(field=>field[0]===key)))fail('Danh sách thông số giữ khi ngẫu nhiên không hợp lệ.');
+ return {exerciseId:id,metadata,tree:{seed:savedSeed,config:cfg,nodes:cleanNodes},history:commands,cursor:savedCursor,display:{showLeaves:data.display.showLeaves,leafOpacity:opacity},randomization:{lockedFields:[...lockedFields]}};
+}
+function applySaveData(data){clearBeforeGroup();config={...data.tree.config};seed=data.tree.seed;exerciseId=data.exerciseId;nodes=[];nodeMap=new Map();for(const saved of data.tree.nodes){const parent=saved.parentId?nodeMap.get(saved.parentId):null;const points=saved.points.map(p=>new THREE.Vector3(...p));const n={id:saved.id,parentId:saved.parentId,attachT:saved.attachT,points,start:points[0],end:points.at(-1),radiusStart:saved.radiusStart,radiusEnd:saved.radiusEnd,children:[],meshes:[],leaves:[],limit:1,visible:true};nodes.push(n);nodeMap.set(n.id,n);if(parent)parent.children.push(n.id);n.leaves=saved.leaves.map(l=>({t:l.t,pos:new THREE.Vector3(...l.pos),scale:new THREE.Vector3(...l.scale),rotation:new THREE.Euler(...l.rotation),color:new THREE.Color(...l.color)}));}history=data.history.map(c=>({...c}));cursor=data.cursor;for(const [key,,,,,,unit] of fields){$(key).value=config[key];$('keep-'+key).checked=data.randomization.lockedFields.includes(key);$(key+'-out').textContent=`${config[key]} ${unit}`;}for(const [key,id] of [['title','exercise-title'],['worker','exercise-worker'],['task','exercise-task'],['review','exercise-review']])$(id).value=data.metadata[key];$('show-leaves').checked=data.display.showLeaves;$('leaf-opacity').value=data.display.leafOpacity;leafMaterial.opacity=data.display.leafOpacity/100;$('leaf-opacity-out').textContent=data.display.leafOpacity+'%';$('dirty').textContent='';clearSelection();rebuild();setViewMode('after');fitCamera();$('exercise').open=true;$('file-message').className='muted';$('file-message').textContent=`Đã tải “${data.metadata.title||'Bài tập'}” · ${cursor} vết cắt đang áp dụng. Có thể so sánh, hoàn tác hoặc ghi nhận xét rồi lưu lại.`;setStatus(`Đã mở “${data.metadata.title||'Bài tập'}”${data.metadata.worker?' · '+data.metadata.worker:''} · ${cursor} vết cắt. Cây gốc và lịch sử đã được khôi phục.`);}
+// Folder access is optional. On supporting browsers inspect actual entries;
+// otherwise number known downloads and let the browser handle other collisions.
+let saveDirectory=null,saveInProgress=false;
+const downloadRegistryKey='TREE_LAB_download_names_v1';
+const usedDownloadNames=new Set();
+try{const stored=JSON.parse(window.localStorage.getItem(downloadRegistryKey)||'[]');if(Array.isArray(stored))for(const name of stored)if(typeof name==='string')usedDownloadNames.add(name.toLowerCase());}catch{}
+function rememberDownload(name){usedDownloadNames.add(name.toLowerCase());try{window.localStorage.setItem(downloadRegistryKey,JSON.stringify([...usedDownloadNames].slice(-5000)));}catch{}}
+function numberedFileName(base,index){return base+(index?'_'+index:'')+'.json';}
+async function findAvailableFileName(base,directory){for(let index=0;index<100000;index++){const name=numberedFileName(base,index);if(!directory){if(!usedDownloadNames.has(name.toLowerCase()))return name;continue;}try{await directory.getFileHandle(name);}catch(error){if(error.name==='NotFoundError')return name;if(error.name==='TypeMismatchError')continue;throw error;}}throw new Error('Đã có quá nhiều file cùng tên. Hãy đổi tên bài tập.');}
+function saveNotice(message,error=false){$('file-message').className=error?'file-error':'muted';$('file-message').textContent=message;setStatus(message);}
+async function saveFile(original){if(saveInProgress)return;saveInProgress=true;$('save-result').disabled=true;$('save-exercise').disabled=true;$('choose-save-folder').disabled=true;try{
+ const data=makeSaveData(original);validateSaveData(data);const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+ const title=($('exercise-title').value||'TREE_LAB').replace(/[^\p{L}\p{N}_-]+/gu,'_').slice(0,80),base=title+'_'+(original?'giao_bai':'bai_nop');
+ if(!saveDirectory&&typeof window.showDirectoryPicker==='function')saveDirectory=await window.showDirectoryPicker({id:'tree-lab-save',mode:'readwrite'});
+ const filename=await findAvailableFileName(base,saveDirectory);
+ if(saveDirectory){const handle=await saveDirectory.getFileHandle(filename,{create:true});const writable=await handle.createWritable();try{await writable.write(blob);await writable.close();}catch(error){try{await writable.abort();}catch{}throw error;}rememberDownload(filename);saveNotice('Đã lưu '+filename+' vào thư mục '+saveDirectory.name+'. File trùng tên được thêm số ở cuối.');}
+ else{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);rememberDownload(filename);saveNotice('Đã tải '+filename+'. Trình duyệt này không cho kiểm tra thư mục; số thứ tự dựa trên các lần tải đã ghi nhận.');}
+ }catch(error){if(error.name==='AbortError')saveNotice('Đã hủy lưu file.');else saveNotice('Không lưu được file: '+error.message,true);}
+ finally{saveInProgress=false;$('save-result').disabled=false;$('save-exercise').disabled=false;$('choose-save-folder').disabled=false;}}
+$('save-exercise').onclick=()=>saveFile(true);$('save-result').onclick=()=>saveFile(false);$('load-tree').onclick=()=>$('tree-file').click();
+$('choose-save-folder').hidden=typeof window.showDirectoryPicker!=='function';
+$('save-hint').textContent=typeof window.showDirectoryPicker==='function'?'Lần lưu đầu: chọn thư mục để kiểm tra tên trùng. File trùng sẽ thành tên_1.json, tên_2.json…':'Trình duyệt không hỗ trợ kiểm tra thư mục. Ứng dụng đánh số các tên tải đã ghi nhận; trình duyệt quyết định tên file cuối cùng trên máy.';
+$('choose-save-folder').onclick=async()=>{try{saveDirectory=await window.showDirectoryPicker({id:'tree-lab-save',mode:'readwrite'});saveNotice('Đã chọn thư mục lưu: '+saveDirectory.name);}catch(error){if(error.name!=='AbortError')saveNotice('Không chọn được thư mục lưu: '+error.message,true);}};
+$('tree-file').onchange=async()=>{const file=$('tree-file').files[0];if(!file)return;try{if(file.size>8*1024*1024)throw new Error('File quá lớn (tối đa 8 MB).');const raw=await file.text();let parsed;try{parsed=JSON.parse(raw);}catch{throw new Error('File không phải JSON hợp lệ.');}const data=validateSaveData(parsed);if(typeof file.name==='string'&&file.name.toLowerCase().endsWith('.json'))rememberDownload(file.name);ask(`Mở bài “${data.metadata.title||'Không tên'}”? Cây và lịch sử hiện tại sẽ được thay thế. Hãy lưu trước nếu cần giữ lại.`,()=>applySaveData(data));}catch(error){$('file-message').className='file-error';$('file-message').textContent='Không tải được file: '+error.message;setStatus($('file-message').textContent);}$('tree-file').value='';};
+const observer=new ResizeObserver(resize);observer.observe(viewport);resize();build();
+const safeTarget=new THREE.Vector3();
+renderer.setAnimationLoop(()=>{controls.update();if(!focusedCut){safeTarget.copy(controls.target);safeTarget.x=clamp(safeTarget.x,-config.spread*.55,config.spread*.55);safeTarget.z=clamp(safeTarget.z,-config.spread*.55,config.spread*.55);safeTarget.y=clamp(safeTarget.y,config.treeHeight*.2,config.treeHeight*.8);camera.position.add(safeTarget.clone().sub(controls.target));controls.target.copy(safeTarget);}
+ const w=renderer.domElement.clientWidth,h=renderer.domElement.clientHeight;
+ if(!reviewGroup&&viewMode==='split'&&beforeGroup){const left=Math.floor(w/2);camera.aspect=left/Math.max(1,h);camera.updateProjectionMatrix();renderer.setScissorTest(true);renderer.setViewport(0,0,left,h);renderer.setScissor(0,0,left,h);treeGroup.visible=false;beforeGroup.visible=true;renderer.render(scene,camera);updateHumanLabel('human-label',0,left,h);renderer.setViewport(left,0,w-left,h);renderer.setScissor(left,0,w-left,h);beforeGroup.visible=false;treeGroup.visible=true;renderer.render(scene,camera);updateHumanLabel('human-label-right',left,w-left,h);renderer.setScissorTest(false);renderer.setViewport(0,0,w,h);
+ }else{camera.aspect=w/Math.max(1,h);camera.updateProjectionMatrix();treeGroup.visible=!reviewGroup&&viewMode==='after';if(beforeGroup)beforeGroup.visible=!reviewGroup&&viewMode==='before';renderer.render(scene,camera);updateHumanLabel('human-label',0,w,h);$('human-label-right').hidden=true;}
+});
+renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();renderer.setAnimationLoop(null);window.treeLabFatal('Kết nối đồ họa bị gián đoạn. Hãy tải lại trang để khởi tạo lại mô hình.');});
+clearTimeout(window.treeLabLoadTimer);$('loading').hidden=true;
+// Read-only diagnostics for reproducible geometry/state checks; no action bypass.
+window.treeLabDiagnostics=()=>({seed,viewMode,exerciseId,humanReference:{height:1.7,position:humanReference.position.toArray()},config:{...config},cursor,history:history.map(c=>({...c})),selected:selected?{...selected}:null,meshes:woodMeshes.length,leaves:leafMesh?.count??0,leafAppearance:{opacity:leafMaterial.opacity,depthWrite:leafMaterial.depthWrite,vertices:leafGeometry.attributes.position.count},memory:{...renderer.info.memory},nodes:nodes.map(n=>({id:n.id,parentId:n.parentId,attachT:n.attachT,limit:n.limit,visible:n.visible,start:n.start.toArray(),end:n.end.toArray(),children:[...n.children],points:n.points.map(p=>p.toArray())})),camera:camera.position.toArray(),target:controls.target.toArray(),projection:camera.projectionMatrix.toArray(),view:camera.matrixWorldInverse.toArray(),ready});
+}catch(error){console.error(error);window.treeLabFatal(error.message?.includes('fetch')||error.message?.includes('module')?'Không tải được thư viện 3D từ CDN. Kiểm tra Internet, quyền truy cập jsDelivr rồi tải lại trang.':error.message||'Có lỗi khi khởi tạo mô hình. Hãy tải lại trang.');}
+</script>
+</body>
+</html>
